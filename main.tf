@@ -31,10 +31,8 @@ resource "tls_private_key" "example" {
   rsa_bits  = 4096
 }
 
-variable "key_name" = "testKey"
-
 resource "aws_key_pair" "generated_key" {
-  key_name   = var.key_name
+  key_name   = "testKey"
   public_key = tls_private_key.example.public_key_openssh
 }
 
