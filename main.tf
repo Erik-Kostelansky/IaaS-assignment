@@ -51,6 +51,8 @@ resource "aws_instance" "web" {
               #!/bin/bash
               apt-get update
               sudo apt-get install nginx
+              sed -i -e 's/80/8080/' /etc/nginx/sites-enabled/default
+              systemctl restart nginx
               EOF
 }
 
