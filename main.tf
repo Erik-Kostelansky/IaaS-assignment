@@ -15,7 +15,7 @@ terraform {
     organization = "ErikCompany"
 
     workspaces {
-      name = " IaaS-assignment "
+      name = "IaaS-assignment"
     }
   }
 }
