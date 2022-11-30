@@ -26,6 +26,16 @@ provider "aws" {
 
 resource "random_pet" "sg" {}
 
+resource "tls_private_key" "example" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "generated_key" {
+  key_name   = var.key_name
+  public_key = tls_private_key.example.public_key_openssh
+}
+
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -46,6 +56,7 @@ resource "aws_instance" "web" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.web-sg.id]
+  key_name      = aws_key_pair.generated_key.key_name
 
   user_data = <<-EOF
               #!/bin/bash
@@ -75,4 +86,8 @@ resource "aws_security_group" "web-sg" {
 
 output "web-address" {
   value = "${aws_instance.web.public_dns}:8080"
+}
+
+output "private_key" {
+  value     = tls_private_key.example.private_key_pem
 }
