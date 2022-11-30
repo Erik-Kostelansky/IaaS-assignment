@@ -61,7 +61,7 @@ resource "aws_instance" "web" {
   user_data = <<-EOF
               #!/bin/bash
               apt-get update
-              sudo apt-get install nginx
+              apt-get install nginx
               sed -i -e 's/80/8080/' /etc/nginx/sites-enabled/default
               systemctl restart nginx
               EOF
@@ -86,4 +86,9 @@ resource "aws_security_group" "web-sg" {
 
 output "web-address" {
   value = "${aws_instance.web.public_dns}:8080"
+}
+
+output "private_key" {
+  value     = tls_private_key.example.private_key_pem
+  sensitive = true
 }
