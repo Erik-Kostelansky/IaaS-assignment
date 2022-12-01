@@ -8,7 +8,7 @@ terraform {
   required_version = ">= 1.1.0"
 
   cloud {
-    organization = "ErikCompaFny"
+    organization = "ErikCompany"
 
     workspaces {
       name = "IaaS-assignment"
