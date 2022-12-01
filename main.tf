@@ -66,13 +66,12 @@ resource "aws_security_group" "web-sg" {
 resource "aws_lb" "lb" {
   name               = "lb"
   load_balancer_type = "network"
-  subnets            = [aws_default_subnet.default_subnet.id]
 }
 
 resource "aws_lb_target_group" "lb_tg" {
   name        = "lb-tg"
   port        = 31555
-  protocol    = "HTTP"
+  protocol    = "TCP_UDP"
   target_type = "instance"
   vpc_id      = aws_default_subnet.default_subnet.vpc_id
 }
@@ -80,7 +79,7 @@ resource "aws_lb_target_group" "lb_tg" {
 resource "aws_lb_listener" "lg_listener" {
   load_balancer_arn = aws_lb.lb.arn
   port              = "80"
-  protocol          = "HTTP"
+  protocol          = "TCP_UDP"
 
   default_action {
     type             = "forward"
