@@ -20,32 +20,33 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-resource "tls_private_key" "example" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
+resource "aws_launch_template" "ubuntu_launch_template" {
+  name_prefix   = "ubuntu_launch_template"
+  image_id      = "ami-0caef02b518350c8b"
+  instance_type = "t2.micro"
 
-resource "aws_key_pair" "generated_key" {
-  key_name   = "testKey"
-  public_key = tls_private_key.example.public_key_openssh
-}
-
-resource "aws_instance" "web" {
-  ami                    = "ami-0caef02b518350c8b"
-  instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.web-sg.id]
-  key_name               = aws_key_pair.generated_key.key_name
-
-  tags = {
-    Name = "Ubuntu-VM"
-  }
 
   user_data = <<-EOF
               #!/bin/bash
               apt-get update
-              apt-get install nginx
-              systemctl restart nginx
+              apt-get install -y apache2
+              sed -i -e 's/80/8080/' /etc/apache2/ports.conf
+              echo "Hello World" > /var/www/html/index.html
+              systemctl restart apache2
               EOF
+}
+
+resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
+  name = "ubuntu_autoscaling_group"
+  availability_zones = ["eu-central-1"]
+  desired_capacity   = 2
+  max_size           = 2
+  min_size           = 1
+
+  launch_template {
+    id      = aws_launch_template.ubuntu_launch_template.id
+  }
 }
 
 resource "aws_security_group" "web-sg" {
@@ -60,17 +61,12 @@ resource "aws_security_group" "web-sg" {
   egress {
     from_port   = 0
     to_port     = 0
-    protocol    = "-1"
+    protocol    = "all"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
-output "web-address" {
-  value = "${aws_instance.web.public_dns}"
-}
-
-output "private_key" {
-  value     = tls_private_key.example.private_key_pem
-  sensitive = true
-}
+# output "web-address" {
+#   value = "${aws_instance.web.public_dns}"
+# }
 
