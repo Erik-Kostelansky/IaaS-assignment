@@ -4,10 +4,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "3.26.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.0.1"
-    }
   }
   required_version = ">= 1.1.0"
 
@@ -21,10 +17,8 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-west-2"
+  region = "eu-central-1"
 }
-
-resource "random_pet" "sg" {}
 
 resource "tls_private_key" "example" {
   algorithm = "RSA"
@@ -36,27 +30,15 @@ resource "aws_key_pair" "generated_key" {
   public_key = tls_private_key.example.public_key_openssh
 }
 
-data "aws_ami" "ubuntu" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["099720109477"] # Canonical
-}
-
 resource "aws_instance" "web" {
-  ami                    = data.aws_ami.ubuntu.id
+  ami                    = "ami-0caef02b518350c8b"
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.web-sg.id]
   key_name               = aws_key_pair.generated_key.key_name
+
+  tags = {
+    Name = "Ubuntu-VM"
+  }
 
   user_data = <<-EOF
               #!/bin/bash
@@ -67,7 +49,7 @@ resource "aws_instance" "web" {
 }
 
 resource "aws_security_group" "web-sg" {
-  name = "${random_pet.sg.id}-sg"
+  name = "web-sg"
   ingress {
     from_port   = 80
     to_port     = 80
@@ -84,7 +66,7 @@ resource "aws_security_group" "web-sg" {
 }
 
 output "web-address" {
-  value = "${aws_instance.web.public_dns}:80"
+  value = "${aws_instance.web.public_dns}"
 }
 
 output "private_key" {
