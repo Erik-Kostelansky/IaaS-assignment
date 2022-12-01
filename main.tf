@@ -31,10 +31,10 @@ resource "aws_launch_template" "ubuntu_launch_template" {
 }
 
 resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
-  name               = "ubuntu_autoscaling_group"
-  desired_capacity   = 2
-  max_size           = 2
-  min_size           = 1
+  name             = "ubuntu_autoscaling_group"
+  desired_capacity = 2
+  max_size         = 2
+  min_size         = 1
 
   launch_template {
     id = aws_launch_template.ubuntu_launch_template.id
