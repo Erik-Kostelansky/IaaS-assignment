@@ -20,7 +20,8 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-resource "aws_default_vpc" "default" {
+resource "aws_default_subnet" "default_subnet" {
+  availability_zone = "eu-central-1a"
 }
 
 resource "aws_launch_template" "ubuntu_launch_template" {
@@ -38,7 +39,7 @@ resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
   desired_capacity    = 2
   max_size            = 2
   min_size            = 1
-  vpc_zone_identifier = [aws_default_vpc.default.id]
+  vpc_zone_identifier = [aws_default_subnet.default_subnet.id]
 
   launch_template {
     id = aws_launch_template.ubuntu_launch_template.id
@@ -72,7 +73,7 @@ resource "aws_lb_target_group" "lb_tg" {
   port        = 31555
   protocol    = "HTTP"
   target_type = "instance"
-  vpc_id      = aws_default_vpc.default.id
+  vpc_id      = aws_default_subnet.default_subnet.id
 }
 
 resource "aws_lb_listener" "lg_listener" {
