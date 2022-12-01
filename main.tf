@@ -66,6 +66,7 @@ resource "aws_security_group" "web-sg" {
 resource "aws_lb" "lb" {
   name               = "lb"
   load_balancer_type = "network"
+  subnets            = [aws_default_subnet.default_subnet.id]
 }
 
 resource "aws_lb_target_group" "lb_tg" {
@@ -73,7 +74,7 @@ resource "aws_lb_target_group" "lb_tg" {
   port        = 31555
   protocol    = "HTTP"
   target_type = "instance"
-  vpc_id      = aws_default_subnet.default_subnet.id
+  vpc_id      = aws_default_subnet.default_subnet.vpc_id
 }
 
 resource "aws_lb_listener" "lg_listener" {
