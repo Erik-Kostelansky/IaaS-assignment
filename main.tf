@@ -52,12 +52,13 @@ resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
   desired_capacity    = 2
   vpc_zone_identifier = [aws_default_subnet.default_subnet.id]
   load_balancers      = [aws_lb.lb.id]
+  target_group_arns   = [aws_lb_target_group.lb_tg.arn]
 
   launch_template {
     id = aws_launch_template.ubuntu_launch_template.id
   }
 
-  depends_on = [aws_lb.lb]
+  depends_on = [aws_lb_target_group.lb_tg]
 }
 
 resource "aws_autoscaling_schedule" "scale_down_group_at" {
