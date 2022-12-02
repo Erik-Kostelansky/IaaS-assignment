@@ -110,6 +110,6 @@ resource "aws_lb_listener" "lg_listener" {
 
 
 output "load-balancer-address" {
-  value = aws_lb.aws_lb.dns_name
+  value = aws_lb.lb.dns_name
 }
 
