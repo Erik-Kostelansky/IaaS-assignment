@@ -56,6 +56,8 @@ resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
   launch_template {
     id = aws_launch_template.ubuntu_launch_template.id
   }
+
+  depends_on = [aws_lb.lb]
 }
 
 resource "aws_autoscaling_schedule" "scale_down_group_at" {
