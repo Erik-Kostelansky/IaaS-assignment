@@ -51,7 +51,6 @@ resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
   min_size            = 1
   desired_capacity    = 2
   vpc_zone_identifier = [aws_default_subnet.default_subnet.id]
-  load_balancers      = [aws_lb.lb.id]
   target_group_arns   = [aws_lb_target_group.lb_tg.arn]
 
   launch_template {
