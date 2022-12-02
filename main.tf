@@ -54,7 +54,8 @@ resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
   target_group_arns   = [aws_lb_target_group.lb_tg.arn]
 
   launch_template {
-    id = aws_launch_template.ubuntu_launch_template.id
+    id      = aws_launch_template.ubuntu_launch_template.id
+    version = "$Latest"
   }
 
   depends_on = [aws_lb_target_group.lb_tg]
