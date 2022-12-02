@@ -1,4 +1,5 @@
 terraform {
+  # Use plugin to communicate with AWS API
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -7,6 +8,7 @@ terraform {
   }
   required_version = ">= 1.1.0"
 
+  # Which Terraform Cloud workspaces to use for the current working directory
   cloud {
     organization = "ErikCompany"
 
@@ -16,35 +18,47 @@ terraform {
   }
 }
 
+# Configuration for AWS provider
+# use "eu-central-1" AWS region
 provider "aws" {
   region = "eu-central-1"
 }
 
+# Use default subnet in AWS availability zone to deploy infrastructure,
+# create instances in "eu-central-1a" availability zone subnet
 resource "aws_default_subnet" "default_subnet" {
   availability_zone = "eu-central-1a"
 }
 
+# Private key used to login to the instances via SSH in AWS console
 resource "tls_private_key" "example" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
+# Public key for the previously generated private key
 resource "aws_key_pair" "generated_key" {
   key_name   = "testKey"
   public_key = tls_private_key.example.public_key_openssh
 }
 
+# launch template for deploying VMs in auto scaling group
 resource "aws_launch_template" "ubuntu_launch_template" {
-  name_prefix   = "ubuntu_launch_template"
+  name_prefix = "ubuntu_launch_template"
+  # Image ID of AWS EC2 instance
   image_id      = "ami-0caef02b518350c8b"
   instance_type = "t2.micro"
-  key_name      = aws_key_pair.generated_key.key_name
+
+  # Key that will be used to access the AWS EC2 instance via AWS console
+  key_name = aws_key_pair.generated_key.key_name
 
   vpc_security_group_ids = [aws_security_group.web-sg.id]
 
   user_data = filebase64("./userDataScript.sh")
 }
 
+
+# Auto scaling group resource for instances
 resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
   name                = "ubuntu_autoscaling_group"
   max_size            = 2
@@ -61,6 +75,7 @@ resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
   depends_on = [aws_lb_target_group.lb_tg]
 }
 
+# Schedule group to schedule down from 18:00 CET to 08:00 CET
 resource "aws_autoscaling_schedule" "scale_down_group_at" {
   scheduled_action_name  = "scale_down_group_at"
   max_size               = -1
@@ -75,6 +90,7 @@ resource "aws_autoscaling_schedule" "scale_down_group_at" {
 
 resource "aws_security_group" "web-sg" {
   name = "web-sg"
+  # Allow IP traffic with destination port 31555 to VMs
   ingress {
     from_port   = 31555
     to_port     = 31555
@@ -82,7 +98,7 @@ resource "aws_security_group" "web-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # SSH access from anywhere
+  # SSH access from anywhere to VMs
   ingress {
     from_port   = 22
     to_port     = 22
@@ -90,7 +106,7 @@ resource "aws_security_group" "web-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  // connectivity to ubuntu mirrors is required to run `apt-get update` and `apt-get install apache2`
+  # Allow all traffic from VMs
   egress {
     from_port   = 0
     to_port     = 0
@@ -99,11 +115,13 @@ resource "aws_security_group" "web-sg" {
   }
 }
 
+# Create AWS network load balancer
 resource "aws_lb" "lb" {
   name               = "lb"
   load_balancer_type = "network"
 }
 
+# Forward all traffic received by load balancer (port 80) to VMs on port 31555
 resource "aws_lb_target_group" "lb_tg" {
   name        = "lb-tg"
   port        = 31555
@@ -112,18 +130,20 @@ resource "aws_lb_target_group" "lb_tg" {
   vpc_id      = aws_default_subnet.default_subnet.vpc_id
 }
 
+# Add a listener to loadbalancer for requests on port 80
 resource "aws_lb_listener" "lg_listener" {
   load_balancer_arn = aws_lb.lb.arn
   port              = "80"
   protocol          = "TCP_UDP"
 
+  # Forward all traffic on port 80 to load balancer target group
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.lb_tg.arn
   }
 }
 
-
+# Export public load balancer address
 output "load-balancer-address" {
   value = aws_lb.lb.dns_name
 }
