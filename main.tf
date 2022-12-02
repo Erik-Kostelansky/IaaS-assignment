@@ -63,6 +63,7 @@ resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
 resource "aws_autoscaling_schedule" "scale_down_group_at" {
   scheduled_action_name  = "scale_down_group_at"
   desired_capacity       = 1
+  max_size               = 1
   start_time             = "2022-12-02T17:00:00Z"
   end_time               = "2022-12-03T07:00:00Z"
   recurrence             = "0 0 * * 1-5"
