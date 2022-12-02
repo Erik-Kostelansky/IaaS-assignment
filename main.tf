@@ -18,16 +18,23 @@ terraform {
   }
 }
 
+# Local variables
+locals {
+  enviromentName   = "IaasAssignment"
+  region           = "eu-central-1"
+  availabilityZone = "eu-central-1a"
+}
+
 # Configuration for AWS provider
 # use "eu-central-1" AWS region
 provider "aws" {
-  region = "eu-central-1"
+  region = local.region
 }
 
 # Use default subnet in AWS availability zone to deploy infrastructure,
 # create instances in "eu-central-1a" availability zone subnet
 resource "aws_default_subnet" "default_subnet" {
-  availability_zone = "eu-central-1a"
+  availability_zone = local.availabilityZone
 }
 
 # Private key used to login to the instances via SSH in AWS console
@@ -38,13 +45,13 @@ resource "tls_private_key" "example" {
 
 # Public key for the previously generated private key
 resource "aws_key_pair" "generated_key" {
-  key_name   = "testKey"
+  key_name   = "${local.enviromentName}-testKey"
   public_key = tls_private_key.example.public_key_openssh
 }
 
 # launch template for deploying VMs in auto scaling group
 resource "aws_launch_template" "ubuntu_launch_template" {
-  name_prefix = "ubuntu_launch_template"
+  name_prefix = "${local.enviromentName}-launch_template"
   # Image ID of AWS EC2 instance
   image_id      = "ami-0caef02b518350c8b"
   instance_type = "t2.micro"
@@ -60,7 +67,7 @@ resource "aws_launch_template" "ubuntu_launch_template" {
 
 # Auto scaling group resource for instances
 resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
-  name                = "ubuntu_autoscaling_group"
+  name                = "${local.enviromentName}-ubuntu_autoscaling_group"
   max_size            = 2
   min_size            = 1
   desired_capacity    = 2
@@ -77,7 +84,7 @@ resource "aws_autoscaling_group" "ubuntu_autoscaling_group" {
 
 # Schedule group to schedule down from 18:00 CET to 08:00 CET
 resource "aws_autoscaling_schedule" "scale_down_group_at" {
-  scheduled_action_name  = "scale_down_group_at"
+  scheduled_action_name  = "${local.enviromentName}-scale_down_group_at"
   max_size               = -1
   min_size               = -1
   desired_capacity       = 1
@@ -89,7 +96,7 @@ resource "aws_autoscaling_schedule" "scale_down_group_at" {
 }
 
 resource "aws_security_group" "web-sg" {
-  name = "web-sg"
+  name = "${local.enviromentName}-web-sg"
   # Allow IP traffic with destination port 31555 to VMs
   ingress {
     from_port   = 31555
@@ -117,13 +124,13 @@ resource "aws_security_group" "web-sg" {
 
 # Create AWS network load balancer
 resource "aws_lb" "lb" {
-  name               = "lb"
+  name               = "${local.enviromentName}-lb"
   load_balancer_type = "network"
 }
 
 # Forward all traffic received by load balancer (port 80) to VMs on port 31555
 resource "aws_lb_target_group" "lb_tg" {
-  name        = "lb-tg"
+  name        = "${local.enviromentName}-lb-tg"
   port        = 31555
   protocol    = "TCP_UDP"
   target_type = "instance"
