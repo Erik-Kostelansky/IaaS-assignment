@@ -126,6 +126,7 @@ resource "aws_security_group" "web-sg" {
 resource "aws_lb" "lb" {
   name               = "${local.enviromentName}-lb"
   load_balancer_type = "network"
+  subnets            = [aws_default_subnet.default_subnet.id]
 }
 
 # Forward all traffic received by load balancer (port 80) to VMs on port 31555
